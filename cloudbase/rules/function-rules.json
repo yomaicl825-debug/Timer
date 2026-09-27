@@ -1,0 +1,4 @@
+{
+  "*": {"invoke": false},
+  "timer-command": {"invoke": "auth != null"}
+}

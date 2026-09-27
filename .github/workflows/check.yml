@@ -1,0 +1,76 @@
+name: Check
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.5'
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: dart format --output=none --set-exit-if-changed lib test integration_test
+      - run: flutter analyze
+      - run: flutter test test
+      - run: node --check cloudbase/functions/timer-command/index.js
+      - run: node --test cloudbase/functions/timer-command/revision.test.js
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.5'
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter build windows --release
+      - run: flutter test integration_test/study_flow_test.dart
+      - uses: actions/upload-artifact@v4
+        with:
+          name: timer-windows-build
+          path: build/windows/x64/runner/Release/
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.5'
+          channel: stable
+          cache: true
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+      - run: flutter pub get
+      - name: Create temporary CI signing key
+        run: |
+          keytool -genkeypair -noprompt -keystore android/app/upload-keystore.jks \
+            -alias ci -storepass ci-test-only -keypass ci-test-only \
+            -dname 'CN=Timer CI' -keyalg RSA -keysize 2048 -validity 1
+          {
+            echo 'storePassword=ci-test-only'
+            echo 'keyPassword=ci-test-only'
+            echo 'keyAlias=ci'
+            echo 'storeFile=upload-keystore.jks'
+          } > android/key.properties
+      - run: flutter build apk --release
+      - name: Verify release APK signature
+        run: |
+          APK_SIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -n 1)
+          "$APK_SIGNER" verify --verbose build/app/outputs/flutter-apk/app-release.apk
+      - name: Android UI flow
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          script: flutter test integration_test/study_flow_test.dart -d emulator-5554
