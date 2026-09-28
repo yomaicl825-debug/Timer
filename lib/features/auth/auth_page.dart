@@ -1,3 +1,5 @@
+import '../../l10n/app_text.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../data/cloud/cloudbase_gateway.dart';
@@ -66,8 +68,8 @@ class _AuthPageState extends State<AuthPage> {
       } else {
         setState(
           () => _message = switch (result.status) {
-            CloudStatus.offline => '网络暂时不可用',
-            _ => '登录或验证失败，请检查输入',
+            CloudStatus.offline => tr(context, '网络暂时不可用'),
+            _ => tr(context, '登录或验证失败，请检查输入'),
           },
         );
       }
@@ -80,55 +82,69 @@ class _AuthPageState extends State<AuthPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Timer')),
+    appBar: AppBar(title: Text('Timefold')),
     body: Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 380),
+        constraints: BoxConstraints(maxWidth: 380),
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                _awaitingCode ? '验证邮箱' : (_register ? '创建账号' : '登录'),
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
-              const SizedBox(height: 24),
-              if (!_awaitingCode) ...[
-                TextField(
-                  controller: _email,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(labelText: '邮箱'),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  _awaitingCode
+                      ? tr(context, '验证邮箱')
+                      : (_register ? tr(context, '创建账号') : tr(context, '登录')),
+                  style: Theme.of(context).textTheme.headlineMedium,
                 ),
-                TextField(
-                  controller: _password,
-                  obscureText: true,
-                  decoration: const InputDecoration(labelText: '密码'),
+                SizedBox(height: 24),
+                if (!_awaitingCode) ...[
+                  TextField(
+                    controller: _email,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: InputDecoration(labelText: tr(context, '邮箱')),
+                  ),
+                  TextField(
+                    controller: _password,
+                    obscureText: true,
+                    decoration: InputDecoration(labelText: tr(context, '密码')),
+                  ),
+                ] else
+                  TextField(
+                    controller: _code,
+                    decoration: InputDecoration(
+                      labelText: tr(context, '邮箱验证码'),
+                    ),
+                  ),
+                if (_message != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: Text(tr(context, _message!)),
+                  ),
+                SizedBox(height: 20),
+                FilledButton(
+                  onPressed: _busy ? null : _submit,
+                  child: Text(
+                    _awaitingCode
+                        ? tr(context, '验证')
+                        : (_register ? tr(context, '注册') : tr(context, '登录')),
+                  ),
                 ),
-              ] else
-                TextField(
-                  controller: _code,
-                  decoration: const InputDecoration(labelText: '邮箱验证码'),
-                ),
-              if (_message != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 16),
-                  child: Text(_message!),
-                ),
-              const SizedBox(height: 20),
-              FilledButton(
-                onPressed: _busy ? null : _submit,
-                child: Text(_awaitingCode ? '验证' : (_register ? '注册' : '登录')),
-              ),
-              if (!_awaitingCode)
-                TextButton(
-                  onPressed: _busy
-                      ? null
-                      : () => setState(() => _register = !_register),
-                  child: Text(_register ? '已有账号？登录' : '没有账号？注册'),
-                ),
-            ],
+                if (!_awaitingCode)
+                  TextButton(
+                    onPressed: _busy
+                        ? null
+                        : () => setState(() => _register = !_register),
+                    child: Text(
+                      _register
+                          ? tr(context, '已有账号？登录')
+                          : tr(context, '没有账号？注册'),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),

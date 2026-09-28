@@ -21,6 +21,7 @@ jobs:
       - run: flutter test test
       - run: node --check cloudbase/functions/timer-command/index.js
       - run: node --test cloudbase/functions/timer-command/revision.test.js
+      - run: node --test scripts/release-tag.test.cjs
   windows:
     runs-on: windows-latest
     steps:

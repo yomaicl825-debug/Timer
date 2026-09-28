@@ -1,3 +1,4 @@
+import 'package:study_timer/l10n/app_language.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -77,14 +78,38 @@ void main() {
       const Duration(minutes: 45),
     );
     await openProfileSection(tester, 'settings');
-    await tester.tap(find.text('深灰底白字'));
+    await tester.scrollUntilVisible(
+      find.text('深灰底浅灰字'),
+      150,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const Key('preferences-list')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    await tester.tap(find.text('深灰底浅灰字'));
     await tester.pumpAndSettle();
     expect(
-      Theme.of(tester.element(find.text('深灰底白字'))).scaffoldBackgroundColor,
-      const Color(0xff333333),
+      Theme.of(tester.element(find.text('深灰底浅灰字'))).scaffoldBackgroundColor,
+      const Color(0xff141414),
     );
+    await tester.scrollUntilVisible(
+      find.text('English'),
+      -150,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const Key('preferences-list')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    await tester.tap(find.text('English'));
+    await tester.pumpAndSettle();
+    expect(services.language, AppLanguage.en);
+    expect(services.tasks.single.name, 'Math');
     await openProfileSection(tester, 'calendar');
-    expect(find.text('今日 00:45:00'), findsOneWidget);
+    expect(find.text('Today 00:45:00'), findsOneWidget);
   });
 }
 
@@ -112,7 +137,7 @@ class _FakeTransport extends CloudTransport {
 Future<void> openProfileSection(WidgetTester tester, String name) async {
   final target = find.byKey(Key('profile-nav-$name'));
   if (target.evaluate().isEmpty) {
-    await tester.tap(find.byTooltip('打开导航'));
+    await tester.tap(find.byIcon(Icons.menu));
     await tester.pumpAndSettle();
   }
   await tester.tap(target);

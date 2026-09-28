@@ -1,3 +1,5 @@
+import '../../l10n/app_text.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -36,7 +38,7 @@ class _ClockPageState extends State<ClockPage> {
       _zonesReady = true;
     }
     timezoneId = widget.services.clockTimezone;
-    _tick = Timer.periodic(const Duration(seconds: 1), (_) => setState(() {}));
+    _tick = Timer.periodic(Duration(seconds: 1), (_) => setState(() {}));
   }
 
   @override
@@ -54,18 +56,18 @@ class _ClockPageState extends State<ClockPage> {
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, update) => AlertDialog(
-          title: const Text('时区'),
+          title: Text(tr(context, '时区')),
           content: TextField(
             controller: controller,
             decoration: InputDecoration(
-              labelText: 'IANA timezone',
-              errorText: error,
+              labelText: tr(context, 'IANA timezone'),
+              errorText: error == null ? null : tr(context, error!),
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('取消'),
+              child: Text(tr(context, '取消')),
             ),
             FilledButton(
               onPressed: () {
@@ -78,7 +80,7 @@ class _ClockPageState extends State<ClockPage> {
                   update(() => error = '无效时区');
                 }
               },
-              child: const Text('应用'),
+              child: Text(tr(context, '应用')),
             ),
           ],
         ),
@@ -118,8 +120,8 @@ class _ClockPageState extends State<ClockPage> {
               Align(
                 alignment: Alignment.topLeft,
                 child: IconButton(
-                  tooltip: '切换窗口大小',
-                  icon: const Icon(Icons.open_in_full),
+                  tooltip: tr(context, '切换窗口大小'),
+                  icon: Icon(Icons.open_in_full),
                   onPressed: widget.onToggleCompact,
                 ),
               ),
@@ -141,18 +143,18 @@ class _ClockPageState extends State<ClockPage> {
                             fontFamily: AppAppearance.digitFont(
                               widget.services.fontStyle,
                             ),
-                            fontFeatures: const [FontFeature.tabularFigures()],
+                            fontFeatures: [FontFeature.tabularFigures()],
                             fontWeight: FontWeight.w300,
                             color: foreground,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      SizedBox(height: 24),
                       Text(
                         date,
                         style: TextStyle(fontSize: 28, color: foreground),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       Text(
                         weekdays[local.weekday - 1],
                         style: TextStyle(fontSize: 22, color: foreground),
@@ -165,8 +167,8 @@ class _ClockPageState extends State<ClockPage> {
             Align(
               alignment: Alignment.bottomLeft,
               child: IconButton(
-                tooltip: '返回',
-                icon: const Icon(Icons.close),
+                tooltip: tr(context, '返回'),
+                icon: Icon(Icons.close),
                 onPressed: widget.onClose ?? () => Navigator.maybePop(context),
               ),
             ),

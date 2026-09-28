@@ -1,0 +1,73 @@
+name: Windows V0.3
+on:
+  workflow_run:
+    workflows: [Check]
+    types: [completed]
+permissions:
+  actions: read
+  contents: write
+concurrency:
+  group: windows-v0.3
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: windows-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      VERSION_TAG: V0.3
+    steps:
+      - name: Check existing version
+        id: release
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $releases = gh release list --limit 100 --json tagName | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { throw 'Unable to check releases' }
+          $exists = @($releases | Where-Object tagName -eq $env:VERSION_TAG).Count -gt 0
+          "publish=$((!$exists).ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+      - uses: actions/checkout@v6
+        if: steps.release.outputs.publish == 'true'
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - name: Verify version tag source
+        if: steps.release.outputs.publish == 'true'
+        shell: pwsh
+        env:
+          EXPECTED_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: node scripts/assert-release-tag.cjs
+      - name: Require V0.3 source
+        if: steps.release.outputs.publish == 'true'
+        shell: pwsh
+        run: |
+          $version = Select-String -LiteralPath pubspec.yaml -Pattern '^version: 0\.3\.0\+3$'
+          if ($null -eq $version -or !(Test-Path -LiteralPath docs/v0.3-release.md)) { throw 'Tested source is not V0.3' }
+      - uses: actions/download-artifact@v4
+        if: steps.release.outputs.publish == 'true'
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ github.event.workflow_run.id }}
+          name: timer-windows-build
+          path: build/windows/x64/runner/Release
+      - name: Install Inno Setup
+        if: steps.release.outputs.publish == 'true'
+        shell: pwsh
+        run: choco install innosetup --yes --no-progress
+      - name: Package tested V0.3
+        if: steps.release.outputs.publish == 'true'
+        shell: pwsh
+        run: ./scripts/package-windows.ps1 -Version '0.3.0-preview'
+      - name: Publish independent version
+        if: steps.release.outputs.publish == 'true'
+        shell: pwsh
+        env:
+          TESTED_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          Copy-Item -LiteralPath docs/v0.3-release.md -Destination dist/V0.3-release-notes.md
+          $assets = @(Get-ChildItem -LiteralPath dist -File | ForEach-Object FullName)
+          gh release create $env:VERSION_TAG @assets --target $env:TESTED_SHA --prerelease --title 'Timefold V0.3 · 中英文与品牌试用版' --notes-file docs/v0.3-release.md
+          if ($LASTEXITCODE -ne 0) { throw 'Version release failed' }

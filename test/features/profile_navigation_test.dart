@@ -60,12 +60,12 @@ void main() {
     await openProfile(tester);
     await tester.tap(find.byKey(const Key('profile-nav-settings')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('深灰底白字'));
+    await tester.tap(find.text('深灰底浅灰字'));
     await tester.pumpAndSettle();
-    final context = tester.element(find.text('深灰底白字'));
+    final context = tester.element(find.text('深灰底浅灰字'));
     final theme = Theme.of(context);
-    expect(theme.scaffoldBackgroundColor, const Color(0xff333333));
-    expect(theme.colorScheme.onSurface, Colors.white);
+    expect(theme.scaffoldBackgroundColor, const Color(0xff141414));
+    expect(theme.colorScheme.onSurface, const Color(0xffc4c4c4));
     expect(theme.textTheme.bodyLarge!.fontSize, greaterThanOrEqualTo(18));
     expect(theme.textTheme.labelLarge!.fontWeight, FontWeight.w400);
     expect(tester.takeException(), isNull);

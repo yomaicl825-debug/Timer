@@ -97,6 +97,16 @@ void main() {
     await tester.tap(find.text('等宽').last);
     await tester.pumpAndSettle();
     expect(services.fontStyle, 1);
+    await tester.scrollUntilVisible(
+      find.text('保存时长'),
+      150,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const Key('preferences-list')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
     await tester.enterText(find.byKey(const Key('focus-minutes')), '35');
     await tester.enterText(find.byKey(const Key('break-minutes')), '8');
     await tester.tap(find.text('保存时长'));

@@ -1,3 +1,6 @@
+import 'l10n/app_language.dart';
+import 'l10n/generated/app_localizations.dart';
+
 import 'dart:convert';
 import 'dart:async';
 import 'dart:io';
@@ -84,10 +87,16 @@ void _bindMainServices(AppServices services) {
   _mainServices = services;
   var theme = services.theme;
   var fontStyle = services.fontStyle;
+  var language = services.language;
   _appearanceListener = () {
-    if (theme == services.theme && fontStyle == services.fontStyle) return;
+    if (theme == services.theme &&
+        fontStyle == services.fontStyle &&
+        language == services.language) {
+      return;
+    }
     theme = services.theme;
     fontStyle = services.fontStyle;
+    language = services.language;
     unawaited(TimerWindow(services).refreshAppearance());
   };
   services.addListener(_appearanceListener!);
@@ -118,6 +127,10 @@ Future<void> _startTimerWindow(
       services.applyAppearance(
         theme: AppAppearance.parseTheme(appearance['theme'] as String?),
         fontStyle: appearance['fontStyle'] as int,
+        language: resolveLanguage(
+          appearance['language'] as String?,
+          services.language.locale,
+        ),
       );
     } else if (call.method == 'compact') {
       final compact = call.arguments == true;
@@ -147,6 +160,9 @@ Future<void> _startTimerWindow(
       builder: (context, _) => MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: AppAppearance.themeFor(services.theme),
+        locale: services.language.locale,
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
         home: data['timerView'] == 'clock'
             ? ClockPage(
                 services: services,

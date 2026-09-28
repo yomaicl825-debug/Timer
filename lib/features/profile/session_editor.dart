@@ -1,3 +1,5 @@
+import '../../l10n/app_text.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../app.dart';
@@ -17,17 +19,17 @@ Future<void> showSessionEditor(
     context: context,
     builder: (dialogContext) => StatefulBuilder(
       builder: (context, update) => AlertDialog(
-        title: const Text('编辑记录'),
+        title: Text(tr(context, '编辑记录')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             DropdownButtonFormField<String?>(
               initialValue: selectedTask,
-              decoration: const InputDecoration(labelText: '任务'),
+              decoration: InputDecoration(labelText: tr(context, '任务')),
               items: [
-                const DropdownMenuItem<String?>(
+                DropdownMenuItem<String?>(
                   value: null,
-                  child: Text('未归类'),
+                  child: Text(tr(context, '未归类')),
                 ),
                 for (final task in services.tasks)
                   DropdownMenuItem<String?>(
@@ -41,8 +43,8 @@ Future<void> showSessionEditor(
               initialValue: durationText,
               onChanged: (value) => durationText = value,
               decoration: InputDecoration(
-                labelText: '计入时长 HH:MM:SS',
-                errorText: error,
+                labelText: tr(context, '计入时长 HH:MM:SS'),
+                errorText: error == null ? null : tr(context, error!),
               ),
             ),
           ],
@@ -58,7 +60,7 @@ Future<void> showSessionEditor(
               );
               if (dialogContext.mounted) Navigator.pop(dialogContext);
             },
-            child: const Text('删除记录'),
+            child: Text(tr(context, '删除记录')),
           ),
           FilledButton(
             onPressed: () async {
@@ -88,7 +90,7 @@ Future<void> showSessionEditor(
               );
               if (dialogContext.mounted) Navigator.pop(dialogContext);
             },
-            child: const Text('保存'),
+            child: Text(tr(context, '保存')),
           ),
         ],
       ),

@@ -1,3 +1,5 @@
+import '../../l10n/app_text.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../app.dart';
@@ -36,8 +38,9 @@ class LauncherPage extends StatelessWidget {
       }
     } on StateError {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('已有计时正在进行，请先结束后重试')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(tr(context, '已有计时正在进行，请先结束后重试'))),
+        );
       }
     }
   }
@@ -50,7 +53,7 @@ class LauncherPage extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              title: const Text('正数计时'),
+              title: Text(tr(context, '正数计时')),
               onTap: () async {
                 Navigator.pop(sheetContext);
                 await _start(
@@ -60,7 +63,7 @@ class LauncherPage extends StatelessWidget {
               },
             ),
             ListTile(
-              title: const Text('番茄钟'),
+              title: Text(tr(context, '番茄钟')),
               onTap: () async {
                 Navigator.pop(sheetContext);
                 await _start(
@@ -79,18 +82,21 @@ class LauncherPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final tasks = services.tasks;
     return Scaffold(
-      appBar: AppBar(title: const Text('Timer')),
+      appBar: AppBar(title: Text('Timefold')),
       body: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 640),
+          constraints: BoxConstraints(maxWidth: 640),
           child: Column(
             children: [
-              const SizedBox(height: 36),
-              Text('YOUR TASKS', style: Theme.of(context).textTheme.labelLarge),
-              const SizedBox(height: 28),
+              SizedBox(height: 36),
+              Text(
+                tr(context, 'YOUR TASKS'),
+                style: Theme.of(context).textTheme.labelLarge,
+              ),
+              SizedBox(height: 28),
               Expanded(
                 child: tasks.isEmpty
-                    ? const Center(child: Text('添加任务，开始专注'))
+                    ? Center(child: Text(tr(context, '添加任务，开始专注')))
                     : ListView.builder(
                         itemCount: tasks.length,
                         itemBuilder: (context, index) {
@@ -103,7 +109,7 @@ class LauncherPage extends StatelessWidget {
                         },
                       ),
               ),
-              const Divider(),
+              Divider(),
               Wrap(
                 alignment: WrapAlignment.center,
                 spacing: 8,
@@ -115,11 +121,11 @@ class LauncherPage extends StatelessWidget {
                       onPressed: () =>
                           TimerWindow(services)
                               .open(TimerViewArgs.timer, context: context),
-                      child: const Text('继续当前计时'),
+                      child: Text(tr(context, '继续当前计时')),
                     ),
                   TextButton(
                     onPressed: () => showTaskEditor(context, services),
-                    child: const Text('新建任务'),
+                    child: Text(tr(context, '新建任务')),
                   ),
                   TextButton(
                     onPressed: () async {
@@ -128,18 +134,22 @@ class LauncherPage extends StatelessWidget {
                         () async => services.startElapsed(null),
                       );
                     },
-                    child: const Text('开始学习'),
+                    child: Text(tr(context, '开始学习')),
                   ),
                   TextButton(
                     onPressed: () =>
                         TimerWindow(services)
                             .open(TimerViewArgs.clock, context: context),
-                    child: const Text('全屏时钟'),
+                    child: Text(tr(context, '全屏时钟')),
                   ),
                   if (onAccount != null)
                     TextButton(
                       onPressed: () => onAccount!(context),
-                      child: Text(services.ownerId == 'local' ? '账号' : '退出账号'),
+                      child: Text(
+                        services.ownerId == 'local'
+                            ? tr(context, '账号')
+                            : tr(context, '退出账号'),
+                      ),
                     ),
                   TextButton(
                     onPressed: () => Navigator.push(
@@ -154,11 +164,11 @@ class LauncherPage extends StatelessWidget {
                         ),
                       ),
                     ),
-                    child: const Text('个人主页'),
+                    child: Text(tr(context, '个人主页')),
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
             ],
           ),
         ),

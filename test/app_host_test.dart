@@ -1,3 +1,4 @@
+import 'package:study_timer/l10n/app_language.dart';
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,8 +10,55 @@ import 'package:study_timer/data/local/local_repository.dart';
 import 'package:study_timer/domain/records/task.dart';
 
 void main() {
+  final binding = TestWidgetsFlutterBinding.ensureInitialized();
+  setUp(() => binding.platformDispatcher.localeTestValue = const Locale('zh'));
+  tearDown(() => binding.platformDispatcher.clearLocaleTestValue());
+
+  testWidgets(
+    'language chosen before first sign-in is saved for new windows and restart',
+    (tester) async {
+      final db = AppDatabase(NativeDatabase.memory());
+      addTearDown(db.close);
+      final services = AppServices(
+        repository: LocalRepository(db, ownerId: 'local'),
+        ownerId: 'local',
+        nativeWindows: false,
+        language: AppLanguage.en,
+      );
+      await services.load();
+      await tester.pumpWidget(
+        AppHost(
+          database: db,
+          initialServices: services,
+          gateway: CloudGateway(_FakeTransport()),
+          closeAccountWindows: (_) async {},
+        ),
+      );
+      await tester.tap(find.text('Account'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byType(TextField).first,
+        'student@example.com',
+      );
+      await tester.enterText(find.byType(TextField).last, 'password123');
+      await tester.tap(find.text('Sign in').last);
+      await tester.pumpAndSettle();
+      final account = LocalRepository(db, ownerId: 'student');
+      expect((await account.getSettings())['language'], 'en');
+      final child = AppServices(
+        repository: account,
+        ownerId: 'student',
+        language: AppLanguage.zh,
+      );
+      await child.load();
+      expect(child.language, AppLanguage.en);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+
   test('second online timer claim is rejected before local start', () async {
     final services = AppServices(
+      language: AppLanguage.zh,
       ownerId: 'student',
       cloud: CloudGateway(_FakeTransport(claimStatus: 'conflict')),
     );
@@ -21,12 +69,14 @@ void main() {
     'offline claim is explicit while permission denial blocks start',
     () async {
       final offline = AppServices(
+        language: AppLanguage.zh,
         ownerId: 'student',
         cloud: CloudGateway(_FakeTransport(claimStatus: 'offline')),
       );
       await offline.startElapsed(null);
       expect(offline.syncMessage, '离线计时，稍后同步');
       final denied = AppServices(
+        language: AppLanguage.zh,
         ownerId: 'student',
         cloud: CloudGateway(_FakeTransport(claimStatus: 'permissionDenied')),
       );
@@ -38,6 +88,7 @@ void main() {
     var now = DateTime.utc(2026, 1, 1);
     final transport = _FakeTransport();
     final services = AppServices(
+      language: AppLanguage.zh,
       ownerId: 'student',
       cloud: CloudGateway(transport),
       clock: () => now,
@@ -51,6 +102,7 @@ void main() {
   test('ended timer retries release only for its own cloud lock', () async {
     final transport = _ReleaseTransport();
     final services = AppServices(
+      language: AppLanguage.zh,
       ownerId: 'student',
       cloud: CloudGateway(transport),
       clock: () => DateTime.utc(2026, 1, 1),
@@ -74,6 +126,7 @@ void main() {
       final transport = _ReleaseTransport();
       var now = DateTime.utc(2026, 1, 1);
       final services = AppServices(
+        language: AppLanguage.zh,
         repository: repo,
         ownerId: 'student',
         cloud: CloudGateway(transport),
@@ -115,6 +168,7 @@ void main() {
       );
       final closedOwners = <String>[];
       final services = AppServices(
+        language: AppLanguage.zh,
         repository: local,
         ownerId: 'local',
         nativeWindows: false,

@@ -1,3 +1,5 @@
+import '../../l10n/app_text.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../domain/timer/timer_state.dart';
@@ -25,15 +27,18 @@ class TimerControls extends StatelessWidget {
     spacing: 16,
     children: [
       if (phase == TimerPhase.focus || phase == TimerPhase.breakTime)
-        TextButton(onPressed: onPause, child: const Text('暂停')),
+        TextButton(onPressed: onPause, child: Text(tr(context, '暂停'))),
       if (phase == TimerPhase.pausedFocus || phase == TimerPhase.pausedBreak)
-        TextButton(onPressed: onResume, child: const Text('继续')),
+        TextButton(onPressed: onResume, child: Text(tr(context, '继续'))),
       if (phase == TimerPhase.breakTime || phase == TimerPhase.pausedBreak)
-        TextButton(onPressed: onFinishBreak, child: const Text('提前结束休息')),
+        TextButton(
+          onPressed: onFinishBreak,
+          child: Text(tr(context, '提前结束休息')),
+        ),
       if (phase == TimerPhase.waiting)
-        FilledButton(onPressed: onNext, child: const Text('下一轮')),
+        FilledButton(onPressed: onNext, child: Text(tr(context, '下一轮'))),
       if (phase != TimerPhase.ended)
-        TextButton(onPressed: onEnd, child: const Text('结束')),
+        TextButton(onPressed: onEnd, child: Text(tr(context, '结束'))),
     ],
   );
 }

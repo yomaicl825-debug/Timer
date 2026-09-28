@@ -1,3 +1,5 @@
+import '../../l10n/app_text.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../app.dart';
@@ -9,16 +11,19 @@ Future<void> showTaskEditor(BuildContext context, AppServices services) async {
     context: context,
     builder: (dialogContext) => StatefulBuilder(
       builder: (context, setState) => AlertDialog(
-        title: const Text('新建任务'),
+        title: Text(tr(context, '新建任务')),
         content: TextFormField(
           onChanged: (value) => name = value,
           autofocus: true,
-          decoration: InputDecoration(labelText: '任务名', errorText: error),
+          decoration: InputDecoration(
+            labelText: tr(context, '任务名'),
+            errorText: error == null ? null : tr(context, error!),
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('取消'),
+            child: Text(tr(context, '取消')),
           ),
           FilledButton(
             onPressed: () async {
@@ -33,7 +38,7 @@ Future<void> showTaskEditor(BuildContext context, AppServices services) async {
                 );
               }
             },
-            child: const Text('保存'),
+            child: Text(tr(context, '保存')),
           ),
         ],
       ),

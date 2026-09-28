@@ -1,3 +1,10 @@
+import 'l10n/app_notice.dart';
+
+import 'dart:ui' show PlatformDispatcher;
+
+import 'l10n/app_language.dart';
+import 'l10n/generated/app_localizations.dart';
+
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
@@ -21,11 +28,16 @@ class AppServices extends ChangeNotifier {
     List<TaskRecord> tasks = const [],
     List<FocusSession> sessions = const [],
     DateTime Function()? clock,
+    AppLanguage? language,
   }) : _tasks = List.of(tasks),
        _sessions = List.of(sessions),
-       clock = clock ?? DateTime.now;
+       clock = clock ?? DateTime.now,
+       language =
+           language ??
+           resolveLanguage(null, PlatformDispatcher.instance.locale);
 
   factory AppServices.fake({
+    AppLanguage? language,
     List<TaskRecord> tasks = const [],
     List<FocusSession> sessions = const [],
     DateTime Function()? clock,
@@ -34,6 +46,7 @@ class AppServices extends ChangeNotifier {
     sessions: sessions,
     clock: clock,
     nativeWindows: false,
+    language: language ?? AppLanguage.zh,
   );
 
   final LocalRepository? repository;
@@ -47,9 +60,10 @@ class AppServices extends ChangeNotifier {
   Set<String> _excludedSessionIds = {};
   List<SyncConflict> syncConflicts = [];
   RevisionConflict? revisionConflict;
-  String? syncMessage;
+  AppNotice? _syncNotice;
+  String? get syncMessage => _syncNotice?.resolve(language);
   void setSyncMessage(String? message) {
-    syncMessage = message;
+    _syncNotice = AppNotice.fromSource(message);
     notifyListeners();
   }
 
@@ -63,6 +77,7 @@ class AppServices extends ChangeNotifier {
   AppTheme theme = AppTheme.light;
   bool get darkMode => theme != AppTheme.light;
   int fontStyle = 0;
+  AppLanguage language;
 
   List<TaskRecord> get tasks =>
       List.unmodifiable(_tasks.where((task) => task.deletedAt == null));
@@ -103,6 +118,12 @@ class AppServices extends ChangeNotifier {
     activeTimer = await store.loadTimer();
     _lastCheckpoint = activeTimer?.lastObservedAt;
     final settings = await store.getSettings();
+    if (settings.containsKey('language')) {
+      language = resolveLanguage(
+        settings['language'],
+        PlatformDispatcher.instance.locale,
+      );
+    }
     theme = AppAppearance.parseTheme(settings['theme']);
     fontStyle = int.tryParse(settings['fontStyle'] ?? '') ?? 0;
     statisticsTimezone = settings['statisticsTimezone'] ?? 'Asia/Shanghai';
@@ -123,6 +144,12 @@ class AppServices extends ChangeNotifier {
     }
   }
 
+  Future<void> setLanguage(AppLanguage value) async {
+    await _savePreference('language', value.name);
+    language = value;
+    notifyListeners();
+  }
+
   Future<void> setDarkMode(bool value) async {
     await setTheme(value ? AppTheme.dark : AppTheme.light);
   }
@@ -140,13 +167,22 @@ class AppServices extends ChangeNotifier {
     notifyListeners();
   }
 
-  void applyAppearance({required AppTheme theme, required int fontStyle}) {
+  void applyAppearance({
+    required AppTheme theme,
+    required int fontStyle,
+    AppLanguage? language,
+  }) {
     if (fontStyle < 0 || fontStyle > 2) {
       throw ArgumentError('Unknown font style');
     }
-    if (this.theme == theme && this.fontStyle == fontStyle) return;
+    if (this.theme == theme &&
+        this.fontStyle == fontStyle &&
+        (language == null || this.language == language)) {
+      return;
+    }
     this.theme = theme;
     this.fontStyle = fontStyle;
+    if (language != null) this.language = language;
     notifyListeners();
   }
 
@@ -516,7 +552,10 @@ class TimerApp extends StatelessWidget {
     animation: services,
     builder: (context, _) => MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Timer',
+      title: 'Timefold',
+      locale: services.language.locale,
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
       theme: AppAppearance.themeFor(services.theme),
       home: LauncherPage(
         services: services,

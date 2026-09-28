@@ -52,6 +52,7 @@ class TimerWindow {
           await existing.invokeMethod<void>('appearance', {
             'theme': services.theme.name,
             'fontStyle': services.fontStyle,
+            'language': services.language.name,
           });
           await existing.show();
           return;
@@ -105,6 +106,7 @@ class TimerWindow {
           await window.invokeMethod<void>('appearance', {
             'theme': services.theme.name,
             'fontStyle': services.fontStyle,
+            'language': services.language.name,
           });
         } catch (_) {
           // A window may close while an appearance update is being sent.

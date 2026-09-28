@@ -1,3 +1,5 @@
+import '../../l10n/app_text.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -30,7 +32,7 @@ class _TimerPageState extends State<TimerPage> {
   @override
   void initState() {
     super.initState();
-    _tick = Timer.periodic(const Duration(seconds: 1), (_) => _onTick());
+    _tick = Timer.periodic(Duration(seconds: 1), (_) => _onTick());
   }
 
   Future<void> _onTick() async {
@@ -83,7 +85,7 @@ class _TimerPageState extends State<TimerPage> {
     builder: (context, _) {
       final state = widget.services.activeTimer;
       if (state == null) {
-        return const Scaffold(body: Center(child: Text('没有进行中的计时')));
+        return Scaffold(body: Center(child: Text(tr(context, '没有进行中的计时'))));
       }
       final now = widget.services.clock();
       final projected = widget.services.engine.advance(state, at: now);
@@ -92,10 +94,13 @@ class _TimerPageState extends State<TimerPage> {
           : now;
       final phase = projected.phase;
       final label = switch (phase) {
-        TimerPhase.breakTime || TimerPhase.pausedBreak => 'BREAK',
-        TimerPhase.waiting => '等待下一轮',
-        TimerPhase.ended => '已结束',
-        _ => state.mode == TimerMode.pomodoro ? 'FOCUS' : 'ELAPSED',
+        TimerPhase.breakTime || TimerPhase.pausedBreak => tr(context, 'BREAK'),
+        TimerPhase.waiting => tr(context, '等待下一轮'),
+        TimerPhase.ended => tr(context, '已结束'),
+        _ =>
+          state.mode == TimerMode.pomodoro
+              ? tr(context, 'FOCUS')
+              : tr(context, 'ELAPSED'),
       };
       final foreground = Theme.of(context).colorScheme.onSurface;
       return Scaffold(
@@ -106,8 +111,8 @@ class _TimerPageState extends State<TimerPage> {
                 Align(
                   alignment: Alignment.topLeft,
                   child: IconButton(
-                    tooltip: '关闭计时窗口',
-                    icon: const Icon(Icons.close),
+                    tooltip: tr(context, '关闭计时窗口'),
+                    icon: Icon(Icons.close),
                     onPressed: widget.onClose,
                   ),
                 ),
@@ -115,8 +120,8 @@ class _TimerPageState extends State<TimerPage> {
                 Align(
                   alignment: Alignment.topRight,
                   child: IconButton(
-                    tooltip: '切换窗口大小',
-                    icon: const Icon(Icons.open_in_full),
+                    tooltip: tr(context, '切换窗口大小'),
+                    icon: Icon(Icons.open_in_full),
                     onPressed: widget.onToggleCompact,
                   ),
                 ),
@@ -136,7 +141,7 @@ class _TimerPageState extends State<TimerPage> {
                             color: foreground,
                           ),
                         ),
-                        const SizedBox(height: 20),
+                        SizedBox(height: 20),
                         FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Text(
@@ -149,22 +154,20 @@ class _TimerPageState extends State<TimerPage> {
                               fontFamily: AppAppearance.digitFont(
                                 widget.services.fontStyle,
                               ),
-                              fontFeatures: const [
-                                FontFeature.tabularFigures(),
-                              ],
+                              fontFeatures: [FontFeature.tabularFigures()],
                               color: foreground,
                             ),
                           ),
                         ),
                         if (projected.clockWarning)
-                          const Padding(
+                          Padding(
                             padding: EdgeInsets.only(top: 20),
-                            child: Text('系统时间发生回拨，请校准时间后继续'),
+                            child: Text(tr(context, '系统时间发生回拨，请校准时间后继续')),
                           ),
                         if (phase == TimerPhase.waiting)
-                          const Padding(
+                          Padding(
                             padding: EdgeInsets.only(top: 24),
-                            child: Text('休息已结束，准备好后开始下一轮'),
+                            child: Text(tr(context, '休息已结束，准备好后开始下一轮')),
                           ),
                       ],
                     ),

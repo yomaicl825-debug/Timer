@@ -1,12 +1,12 @@
-# Timer
+# Timefold
 
 安静的学习计时软件。当前第一版目标是 Windows 和 Android；iPhone 版在后续开发。
 
 ## 下载与使用
 
-V0.2 界面改进试用版：[下载安装包](https://github.com/yomaicl825-debug/Timer/releases/download/V0.2/Timer-0.2.0-preview-windows-setup.exe) · [便携版、源码与校验文件](https://github.com/yomaicl825-debug/Timer/releases/tag/V0.2)。个人主页采用分区导航，界面字号增大，并支持白、黑、深灰三种主题。首次安装方法见 [安装说明](docs/installation.md)，完整变化见 [V0.2 发行说明](docs/v0.2-release.md)。
+V0.3 中英文与品牌试用版：[下载安装包](https://github.com/yomaicl825-debug/Timer/releases/download/V0.3/Timefold-0.3.0-preview-windows-setup.exe) · [便携版、源码与校验文件](https://github.com/yomaicl825-debug/Timer/releases/tag/V0.3)。个人主页设置可切换中文与 English，采用透明 A1 图标，灰色主题使用更深背景和柔和浅灰文字。完整变化见 [V0.3 发行说明](docs/v0.3-release.md)。
 
-[V0.1 归档](https://github.com/yomaicl825-debug/Timer/releases/tag/V0.1) 保留。Android 构建和设备流程测试已通过，公开 APK 待配置长期签名密钥后发布。
+[V0.2 归档](https://github.com/yomaicl825-debug/Timer/releases/tag/V0.2)、[V0.1 归档](https://github.com/yomaicl825-debug/Timer/releases/tag/V0.1) 保留。Android 构建和设备流程测试已通过，公开 APK 待配置长期签名密钥后发布。
 
 主窗口只有任务列表与入口；开始学习或打开时钟后进入沉浸计时。支持正数计时、番茄钟、暂停继续、提前结束、深浅主题、三种数字字体、时区时钟及每日/每周/每月日历统计。历史记录可以归类或修改计入时长。番茄钟休息结束后等待手动开始下一轮，避免离开设备时继续累计。
 

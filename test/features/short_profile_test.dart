@@ -23,6 +23,16 @@ void main() {
     await tester.tap(find.byKey(const Key('profile-nav-settings')));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
-    expect(find.text('深灰底白字'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('深灰底浅灰字'),
+      100,
+      scrollable: find
+          .descendant(
+            of: find.byKey(const Key('preferences-list')),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    expect(find.text('深灰底浅灰字'), findsOneWidget);
   });
 }

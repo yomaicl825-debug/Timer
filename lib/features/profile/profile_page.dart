@@ -1,3 +1,5 @@
+import '../../l10n/app_text.dart';
+
 import 'package:flutter/material.dart';
 import 'package:timezone/data/latest.dart' as timezone_data;
 import 'package:timezone/timezone.dart' as tz;
@@ -35,7 +37,12 @@ class _ProfilePageState extends State<ProfilePage> {
   bool collapsed = false;
   final scaffoldKey = GlobalKey<ScaffoldState>();
   AppServices get services => widget.services;
-  static const labels = ['日历统计', '任务管理', '历史记录', '设置'];
+  List<String> get labels => [
+    tr(context, '日历统计'),
+    tr(context, '任务管理'),
+    tr(context, '历史记录'),
+    tr(context, '设置'),
+  ];
   static const icons = [
     Icons.calendar_month_outlined,
     Icons.checklist,
@@ -58,12 +65,12 @@ class _ProfilePageState extends State<ProfilePage> {
       final name = await showDialog<String>(
         context: context,
         builder: (dialogContext) => AlertDialog(
-          title: const Text('重命名任务'),
+          title: Text(tr(context, '重命名任务')),
           content: TextField(controller: controller),
           actions: [
             FilledButton(
               onPressed: () => Navigator.pop(dialogContext, controller.text),
-              child: const Text('保存'),
+              child: Text(tr(context, '保存')),
             ),
           ],
         ),
@@ -79,7 +86,7 @@ class _ProfilePageState extends State<ProfilePage> {
     if (session == null) return id.substring(0, id.length < 8 ? id.length : 8);
     final name =
         services.tasks.where((t) => t.id == session.taskId).firstOrNull?.name ??
-        '未归类';
+        tr(context, '未归类');
     return '$name · ${TaskRow.formatDuration(session.creditedDuration)}';
   }
 
@@ -98,14 +105,16 @@ class _ProfilePageState extends State<ProfilePage> {
                   if (!compact)
                     Expanded(
                       child: Text(
-                        '个人主页',
+                        tr(context, '个人主页'),
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ),
                   if (!drawer)
                     IconButton(
                       key: Key(compact ? 'profile-expand' : 'profile-collapse'),
-                      tooltip: compact ? '展开导航' : '收起导航',
+                      tooltip: compact
+                          ? tr(context, '展开导航')
+                          : tr(context, '收起导航'),
                       onPressed: () => setState(() => collapsed = !collapsed),
                       icon: Icon(
                         compact ? Icons.menu_open : Icons.chevron_left,
@@ -155,7 +164,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                   children: [
                                     Icon(icons[section.index], size: 24),
                                     if (!compact) ...[
-                                      const SizedBox(width: 14),
+                                      SizedBox(width: 14),
                                       Expanded(
                                         child: Text(labels[section.index]),
                                       ),
@@ -200,13 +209,13 @@ class _ProfilePageState extends State<ProfilePage> {
           runSpacing: 12,
           children: [
             for (final entry in {
-              '今日': stats.daily[_date(date)] ?? Duration.zero,
-              '本周':
+              tr(context, '今日'): stats.daily[_date(date)] ?? Duration.zero,
+              tr(context, '本周'):
                   stats.weekly[_date(
                     date.subtract(Duration(days: local.weekday - 1)),
                   )] ??
                   Duration.zero,
-              '本月':
+              tr(context, '本月'):
                   stats.monthly['${local.year}-${_two(local.month)}'] ??
                   Duration.zero,
             }.entries)
@@ -225,7 +234,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
           ],
         ),
-        const SizedBox(height: 32),
+        SizedBox(height: 32),
         CalendarView(services: services),
       ],
     );
@@ -233,10 +242,15 @@ class _ProfilePageState extends State<ProfilePage> {
 
   List<Widget> _conflicts() => [
     if (services.revisionConflict != null) ...[
-      Text('同一记录在两台设备上被修改', style: Theme.of(context).textTheme.titleMedium),
-      Text('本机：${_sessionSummary(services.revisionConflict!.sessionId)}'),
       Text(
-        '云端：${TaskRow.formatDuration(services.revisionConflict!.remote.creditedDuration)}',
+        tr(context, '同一记录在两台设备上被修改'),
+        style: Theme.of(context).textTheme.titleMedium,
+      ),
+      Text(
+        '${tr(context, '本机：')}${_sessionSummary(services.revisionConflict!.sessionId)}',
+      ),
+      Text(
+        '${tr(context, '云端：')}${TaskRow.formatDuration(services.revisionConflict!.remote.creditedDuration)}',
       ),
       Wrap(
         children: [
@@ -244,20 +258,23 @@ class _ProfilePageState extends State<ProfilePage> {
             onPressed: widget.onResolveRevision == null
                 ? null
                 : () => widget.onResolveRevision!(true),
-            child: const Text('保留本机版本'),
+            child: Text(tr(context, '保留本机版本')),
           ),
           TextButton(
             onPressed: widget.onResolveRevision == null
                 ? null
                 : () => widget.onResolveRevision!(false),
-            child: const Text('保留云端版本'),
+            child: Text(tr(context, '保留云端版本')),
           ),
         ],
       ),
-      const SizedBox(height: 24),
+      SizedBox(height: 24),
     ],
     if (services.syncConflicts.isNotEmpty) ...[
-      Text('待处理的重叠记录', style: Theme.of(context).textTheme.titleMedium),
+      Text(
+        tr(context, '待处理的重叠记录'),
+        style: Theme.of(context).textTheme.titleMedium,
+      ),
       for (final conflict in services.syncConflicts)
         Card(
           child: Padding(
@@ -265,7 +282,7 @@ class _ProfilePageState extends State<ProfilePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('两台设备的离线学习时间重叠，请选择保留哪一条。'),
+                Text(tr(context, '两台设备的离线学习时间重叠，请选择保留哪一条。')),
                 for (final id in [
                   conflict.firstSessionId,
                   conflict.secondSessionId,
@@ -274,13 +291,13 @@ class _ProfilePageState extends State<ProfilePage> {
                     onPressed: widget.onResolveConflict == null
                         ? null
                         : () => widget.onResolveConflict!(conflict.id, id),
-                    child: Text('保留 ${_sessionSummary(id)}'),
+                    child: Text('${tr(context, '保留 ')}${_sessionSummary(id)}'),
                   ),
               ],
             ),
           ),
         ),
-      const SizedBox(height: 24),
+      SizedBox(height: 24),
     ],
   ];
 
@@ -301,9 +318,9 @@ class _ProfilePageState extends State<ProfilePage> {
       children: [
         ..._conflicts(),
         if (sessions.isEmpty)
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(vertical: 40),
-            child: Center(child: Text('暂无历史记录')),
+            child: Center(child: Text(tr(context, '暂无历史记录'))),
           ),
         for (final session in sessions)
           ListTile(
@@ -314,7 +331,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       .where((t) => t.id == session.taskId)
                       .firstOrNull
                       ?.name ??
-                  '未归类',
+                  tr(context, '未归类'),
             ),
             subtitle: Text(
               session.focusSegments.isEmpty
@@ -337,9 +354,9 @@ class _ProfilePageState extends State<ProfilePage> {
     padding: const EdgeInsets.all(28),
     children: [
       if (services.tasks.isEmpty)
-        const Padding(
+        Padding(
           padding: EdgeInsets.symmetric(vertical: 40),
-          child: Center(child: Text('暂无任务，请从主任务页新建')),
+          child: Center(child: Text(tr(context, '暂无任务，请从主任务页新建'))),
         ),
       for (final task in services.tasks)
         ListTile(
@@ -348,12 +365,12 @@ class _ProfilePageState extends State<ProfilePage> {
             TaskRow.formatDuration(services.totalForTask(task.id)),
           ),
           trailing: PopupMenuButton<String>(
-            tooltip: '管理任务',
+            tooltip: tr(context, '管理任务'),
             onSelected: (value) =>
                 value == 'rename' ? _rename(task) : services.deleteTask(task),
-            itemBuilder: (_) => const [
-              PopupMenuItem(value: 'rename', child: Text('重命名')),
-              PopupMenuItem(value: 'delete', child: Text('删除任务')),
+            itemBuilder: (_) => [
+              PopupMenuItem(value: 'rename', child: Text(tr(context, '重命名'))),
+              PopupMenuItem(value: 'delete', child: Text(tr(context, '删除任务'))),
             ],
           ),
         ),
@@ -382,19 +399,22 @@ class _ProfilePageState extends State<ProfilePage> {
             leading: desktop
                 ? BackButton(onPressed: () => Navigator.maybePop(context))
                 : IconButton(
-                    tooltip: '打开导航',
-                    icon: const Icon(Icons.menu),
+                    tooltip: tr(context, '打开导航'),
+                    icon: Icon(Icons.menu),
                     onPressed: () => scaffoldKey.currentState!.openDrawer(),
                   ),
             actions: [
               if (!desktop)
                 IconButton(
-                  tooltip: '返回任务页',
-                  icon: const Icon(Icons.close),
+                  tooltip: tr(context, '返回任务页'),
+                  icon: Icon(Icons.close),
                   onPressed: () => Navigator.maybePop(context),
                 ),
               if (widget.onSync != null)
-                TextButton(onPressed: widget.onSync, child: const Text('同步')),
+                TextButton(
+                  onPressed: widget.onSync,
+                  child: Text(tr(context, '同步')),
+                ),
             ],
           ),
           drawer: desktop
@@ -428,7 +448,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               TextButton(
                                 onPressed: () =>
                                     setState(() => selected = _Section.history),
-                                child: const Text('处理记录冲突'),
+                                child: Text(tr(context, '处理记录冲突')),
                               ),
                           ],
                         ),
@@ -437,7 +457,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       child: Align(
                         alignment: Alignment.topCenter,
                         child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 1040),
+                          constraints: BoxConstraints(maxWidth: 1040),
                           child: KeyedSubtree(
                             key: ValueKey(selected),
                             child: panel,

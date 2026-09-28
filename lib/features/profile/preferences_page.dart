@@ -1,3 +1,6 @@
+import '../../l10n/app_language.dart';
+import '../../l10n/app_text.dart';
+
 import 'package:flutter/material.dart';
 
 import '../../app.dart';
@@ -74,16 +77,34 @@ class _PreferencesPageState extends State<PreferencesPage> {
     animation: widget.services,
     builder: (context, _) {
       final content = ListView(
+        key: const Key('preferences-list'),
         padding: const EdgeInsets.all(28),
         children: [
-          Text('外观', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 12),
+          Text(
+            tr(context, '语言 / Language'),
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          for (final language in AppLanguage.values)
+            ListTile(
+              title: Text(language == AppLanguage.zh ? '中文' : 'English'),
+              selected: widget.services.language == language,
+              trailing: widget.services.language == language
+                  ? const Icon(Icons.check)
+                  : null,
+              onTap: () => widget.services.setLanguage(language),
+            ),
+          const SizedBox(height: 20),
+          Text(
+            tr(context, '外观'),
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          SizedBox(height: 12),
           for (final theme in AppTheme.values)
             ListTile(
               title: Text(switch (theme) {
-                AppTheme.light => '白底黑字',
-                AppTheme.dark => '黑底白字',
-                AppTheme.gray => '深灰底白字',
+                AppTheme.light => tr(context, '白底黑字'),
+                AppTheme.dark => tr(context, '黑底白字'),
+                AppTheme.gray => tr(context, '深灰底浅灰字'),
               }),
               leading: Icon(
                 theme == AppTheme.light
@@ -93,14 +114,20 @@ class _PreferencesPageState extends State<PreferencesPage> {
                     : Icons.contrast,
               ),
               trailing: widget.services.theme == theme
-                  ? const Icon(Icons.check)
+                  ? Icon(Icons.check)
                   : null,
               selected: widget.services.theme == theme,
               onTap: () => widget.services.setTheme(theme),
             ),
           ListTile(
-            title: const Text('数字字体'),
-            subtitle: Text(['轻细', '等宽', '衬线'][widget.services.fontStyle]),
+            title: Text(tr(context, '数字字体')),
+            subtitle: Text(
+              [
+                tr(context, '轻细'),
+                tr(context, '等宽'),
+                tr(context, '衬线'),
+              ][widget.services.fontStyle],
+            ),
             onTap: () async {
               final selected = await showModalBottomSheet<int>(
                 context: context,
@@ -110,7 +137,13 @@ class _PreferencesPageState extends State<PreferencesPage> {
                     children: [
                       for (var index = 0; index < 3; index++)
                         ListTile(
-                          title: Text(['轻细', '等宽', '衬线'][index]),
+                          title: Text(
+                            [
+                              tr(context, '轻细'),
+                              tr(context, '等宽'),
+                              tr(context, '衬线'),
+                            ][index],
+                          ),
                           onTap: () => Navigator.pop(sheetContext, index),
                         ),
                     ],
@@ -122,39 +155,42 @@ class _PreferencesPageState extends State<PreferencesPage> {
               }
             },
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           TextField(
-            key: const Key('focus-minutes'),
+            key: Key('focus-minutes'),
             controller: focus,
             keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: '专注分钟'),
+            decoration: InputDecoration(labelText: tr(context, '专注分钟')),
           ),
           TextField(
-            key: const Key('break-minutes'),
+            key: Key('break-minutes'),
             controller: rest,
             keyboardType: TextInputType.number,
-            decoration: const InputDecoration(labelText: '休息分钟'),
+            decoration: InputDecoration(labelText: tr(context, '休息分钟')),
           ),
-          const SizedBox(height: 8),
-          FilledButton(onPressed: _saveDurations, child: const Text('保存时长')),
-          if (durationError != null) Text(durationError!),
-          const SizedBox(height: 20),
+          SizedBox(height: 8),
+          FilledButton(
+            onPressed: _saveDurations,
+            child: Text(tr(context, '保存时长')),
+          ),
+          if (durationError != null) Text(tr(context, durationError!)),
+          SizedBox(height: 20),
           TextField(
             controller: statsZone,
-            decoration: const InputDecoration(labelText: '统计时区'),
+            decoration: InputDecoration(labelText: tr(context, '统计时区')),
           ),
           TextField(
             controller: clockZone,
-            decoration: const InputDecoration(labelText: '时钟默认时区'),
+            decoration: InputDecoration(labelText: tr(context, '时钟默认时区')),
           ),
-          TextButton(onPressed: _saveZones, child: const Text('保存时区')),
-          if (zoneError != null) Text(zoneError!),
+          TextButton(onPressed: _saveZones, child: Text(tr(context, '保存时区'))),
+          if (zoneError != null) Text(tr(context, zoneError!)),
         ],
       );
       return widget.embedded
           ? content
           : Scaffold(
-              appBar: AppBar(title: const Text('设置')),
+              appBar: AppBar(title: Text(tr(context, '设置'))),
               body: content,
             );
     },

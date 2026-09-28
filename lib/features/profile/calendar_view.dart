@@ -1,3 +1,5 @@
+import '../../l10n/app_text.dart';
+
 import 'package:timezone/data/latest.dart' as timezone_data;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter/material.dart';
@@ -49,34 +51,38 @@ class _CalendarViewState extends State<CalendarView> {
           children: [
             IconButton(
               onPressed: () => _changeMonth(-1),
-              icon: const Icon(Icons.chevron_left),
-              tooltip: '上个月',
+              icon: Icon(Icons.chevron_left),
+              tooltip: tr(context, '上个月'),
             ),
-            Text('${month.year} / ${month.month.toString().padLeft(2, '0')}'),
+            Expanded(
+              child: Center(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    MaterialLocalizations.of(context).formatMonthYear(month),
+                  ),
+                ),
+              ),
+            ),
             IconButton(
               onPressed: () => _changeMonth(1),
-              icon: const Icon(Icons.chevron_right),
-              tooltip: '下个月',
+              icon: Icon(Icons.chevron_right),
+              tooltip: tr(context, '下个月'),
             ),
           ],
         ),
-        const Row(
+        Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            Text('M'),
-            Text('T'),
-            Text('W'),
-            Text('T'),
-            Text('F'),
-            Text('S'),
-            Text('S'),
+            for (var i = 1; i <= 7; i++)
+              Text(MaterialLocalizations.of(context).narrowWeekdays[i % 7]),
           ],
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         GridView.builder(
           shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          physics: NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 7,
             mainAxisExtent: 48,
           ),

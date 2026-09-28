@@ -1,3 +1,5 @@
+import 'l10n/app_text.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -105,11 +107,13 @@ class _AppHostState extends State<AppHost> {
   Future<void> _switchOwner(String ownerId) async {
     if (ownerId.isEmpty || ownerId == services.ownerId) return;
     final replacement = AppServices(
+      language: services.language,
       repository: LocalRepository(widget.database, ownerId: ownerId),
       cloud: ownerId == 'local' ? null : widget.gateway,
       ownerId: ownerId,
     );
     await replacement.load();
+    await replacement.setLanguage(replacement.language);
     await replacement.restoreCloudLock();
     await (widget.closeAccountWindows ?? TimerWindow.closeForOwner)(
       services.ownerId,
@@ -128,8 +132,9 @@ class _AppHostState extends State<AppHost> {
   Future<void> _account(BuildContext context) async {
     final gateway = widget.gateway;
     if (gateway == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('云端账号尚未配置；本机计时可以正常使用')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(tr(context, '云端账号尚未配置；本机计时可以正常使用'))),
+      );
       return;
     }
     if (services.ownerId != 'local') {

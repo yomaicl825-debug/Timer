@@ -33,9 +33,13 @@ class AppAppearance {
     final background = switch (choice) {
       AppTheme.light => Colors.white,
       AppTheme.dark => Colors.black,
-      AppTheme.gray => const Color(0xff333333),
+      AppTheme.gray => const Color(0xff141414),
     };
-    final foreground = dark ? Colors.white : Colors.black;
+    final foreground = choice == AppTheme.gray
+        ? const Color(0xffc4c4c4)
+        : dark
+        ? Colors.white
+        : Colors.black;
     final scheme = (dark ? const ColorScheme.dark() : const ColorScheme.light())
         .copyWith(
           primary: foreground,
@@ -45,14 +49,16 @@ class AppAppearance {
           surface: background,
           onSurface: foreground,
           surfaceContainerLow: choice == AppTheme.gray
-              ? const Color(0xff2b2b2b)
+              ? const Color(0xff0c0c0c)
               : dark
               ? const Color(0xff141414)
               : const Color(0xfff3f3f3),
           surfaceContainerHighest: dark
               ? const Color(0xff454545)
               : const Color(0xffeeeeee),
-          onSurfaceVariant: foreground.withValues(alpha: 0.75),
+          onSurfaceVariant: choice == AppTheme.gray
+              ? const Color(0xffa8a8a8)
+              : foreground.withValues(alpha: 0.75),
         );
     TextStyle text(double size, {bool heading = false}) => TextStyle(
       fontFamily: interfaceFont,
