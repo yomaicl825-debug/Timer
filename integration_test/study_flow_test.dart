@@ -36,7 +36,9 @@ void main() {
     expect(services.tasks.single.name, 'Math');
 
     await tester.tap(find.text('开始学习'));
+    await _waitFor(tester, find.text('暂停'));
     await tester.pumpAndSettle();
+    expect(services.activeTimer, isNotNull);
     expect(services.activeTimer?.taskId, isNull);
     now = now.add(const Duration(minutes: 20));
     await tester.tap(find.text('暂停'));
@@ -74,6 +76,14 @@ void main() {
       const Duration(minutes: 45),
     );
   });
+}
+
+Future<void> _waitFor(WidgetTester tester, Finder finder) async {
+  final deadline = DateTime.now().add(const Duration(seconds: 30));
+  while (finder.evaluate().isEmpty && DateTime.now().isBefore(deadline)) {
+    await tester.pump(const Duration(milliseconds: 100));
+  }
+  expect(finder, findsOneWidget);
 }
 
 class _FakeTransport extends CloudTransport {
