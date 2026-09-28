@@ -6,7 +6,7 @@
 
 ## Android
 
-从 GitHub Releases 下载 `Timer-*-android.apk`，在系统文件管理器打开并按提示允许本次来源安装。只从本项目的 GitHub Releases 下载，并核对 SHA-256。发布 APK 使用项目专属的持久签名密钥；调试 APK 不作为公开发行包。
+Android 构建及设备流程测试已通过，但公开 APK 尚未发布，仍需配置项目专属的持久签名密钥。发布后从 GitHub Releases 下载 `Timer-*-android.apk`，在系统文件管理器打开并按提示允许本次来源安装。请核对发行页的 SHA-256；调试 APK 不作为公开发行包。
 
 ## 数据
 
