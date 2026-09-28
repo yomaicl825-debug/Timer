@@ -50,3 +50,6 @@ app.*.map.json
 android/key.properties
 android/app/upload-keystore.jks
 
+# Immutable local version archives and independent future workspaces
+/versions/
+

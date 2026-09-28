@@ -1,0 +1,54 @@
+name: Archive V0.1
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/v01-release.yml'
+      - 'docs/v0.1-release.md'
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: archive-v0.1
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Check existing archive
+        id: archive
+        run: |
+          set -euo pipefail
+          tags=$(gh release list --limit 100 --json tagName --jq '.[].tagName')
+          if printf '%s\n' "$tags" | grep -Fxq 'V0.1'; then
+            echo 'publish=false' >> "$GITHUB_OUTPUT"
+          else
+            echo 'publish=true' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Verify original build and download Windows assets
+        if: steps.archive.outputs.publish == 'true'
+        run: |
+          set -euo pipefail
+          gh api "repos/$GH_REPO/actions/runs/36365125070" > verified-run.json
+          jq -e '.conclusion == "success" and .head_sha == "e667cc801e06d9ac6de8b36a6d4fad185405a120"' verified-run.json
+          mkdir -p dist
+          gh release download windows-preview-0.1.0 --dir dist --pattern 'Timer-0.1.0-preview-windows-*' --pattern 'SHA256SUMS.txt'
+          cd dist
+          printf '%s\n' \
+            'd7681d2732606ddb6fb1e8722e2b7ec7bd5a2e8fc8552aac06e705ec730a5894  Timer-0.1.0-preview-windows-setup.exe' \
+            '01cf251cc34317a2885ff3a0fffb9b3a82abd45e68cd0195e43d9818e0dc63b2  Timer-0.1.0-preview-windows-portable.zip' \
+            '56f88423b93d3d9ac4e334f8d8a657fc4f5536c03aacd68446f8e3b6260535e2  SHA256SUMS.txt' | sha256sum --check --strict
+          sha256sum --check --strict SHA256SUMS.txt
+      - name: Publish V0.1 archive
+        if: steps.archive.outputs.publish == 'true'
+        env:
+          ARCHIVE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          cp docs/v0.1-release.md dist/V0.1-release-notes.md
+          gh release create V0.1 dist/* --target "$ARCHIVE_SHA" --prerelease --title 'Timer V0.1 · 本机试用版' --notes-file docs/v0.1-release.md

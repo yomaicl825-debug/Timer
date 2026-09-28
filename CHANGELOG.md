@@ -1,6 +1,8 @@
 # 更新记录
 
-## 0.1.0 Windows 本机试用版（2026-09-28）
+## V0.1 本机试用版（2026-09-28）
+
+- 统一归档 Windows 下载包、源码、测试记录及 CloudBase / Android 发布配置步骤，见 [V0.1 发行说明](docs/v0.1-release.md)。Windows 包内部版本为 0.1.0-preview。
 
 - Windows 与 Android Flutter 客户端的主任务列表和沉浸计时界面。
 - 正数计时、番茄钟与时区时钟；暂停、继续、休息等待和历史归类。

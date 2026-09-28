@@ -4,7 +4,7 @@
 
 ## 下载与使用
 
-Windows 本机试用版已发布：[下载安装包](https://github.com/yomaicl825-debug/Timer/releases/download/windows-preview-0.1.0/Timer-0.1.0-preview-windows-setup.exe) · [便携版与校验文件](https://github.com/yomaicl825-debug/Timer/releases/tag/windows-preview-0.1.0)。首次安装方法见 [安装说明](docs/installation.md)。Android 构建和设备流程测试已通过，公开 APK 待配置长期签名密钥后发布。
+V0.1 本机试用版：[下载安装包](https://github.com/yomaicl825-debug/Timer/releases/download/V0.1/Timer-0.1.0-preview-windows-setup.exe) · [便携版、源码与校验文件](https://github.com/yomaicl825-debug/Timer/releases/tag/V0.1)。首次安装方法见 [安装说明](docs/installation.md)，功能、测试记录与后续配置见 [V0.1 发行说明](docs/v0.1-release.md)。Android 构建和设备流程测试已通过，公开 APK 待配置长期签名密钥后发布。
 
 主窗口只有任务列表与入口；开始学习或打开时钟后进入沉浸计时。支持正数计时、番茄钟、暂停继续、提前结束、深浅主题、三种数字字体、时区时钟及每日/每周/每月日历统计。历史记录可以归类或修改计入时长。番茄钟休息结束后等待手动开始下一轮，避免离开设备时继续累计。
 
