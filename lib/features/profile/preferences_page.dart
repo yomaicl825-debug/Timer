@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 
 import '../../app.dart';
+import '../../ui/app_appearance.dart';
 
 class PreferencesPage extends StatefulWidget {
-  const PreferencesPage({super.key, required this.services});
+  const PreferencesPage({
+    super.key,
+    required this.services,
+    this.embedded = false,
+  });
   final AppServices services;
+  final bool embedded;
   @override
   State<PreferencesPage> createState() => _PreferencesPageState();
 }
@@ -14,7 +20,8 @@ class _PreferencesPageState extends State<PreferencesPage> {
   late final TextEditingController rest;
   late final TextEditingController statsZone;
   late final TextEditingController clockZone;
-  String? error;
+  String? durationError;
+  String? zoneError;
 
   @override
   void initState() {
@@ -42,39 +49,55 @@ class _PreferencesPageState extends State<PreferencesPage> {
     final focusMinutes = int.tryParse(focus.text.trim()) ?? 0;
     final restMinutes = int.tryParse(rest.text.trim()) ?? 0;
     if (focusMinutes <= 0 || restMinutes <= 0) {
-      setState(() => error = '时长必须大于 0');
+      setState(() => durationError = '时长必须大于 0');
       return;
     }
     await widget.services.setDurations(
       Duration(minutes: focusMinutes),
       Duration(minutes: restMinutes),
     );
-    setState(() => error = null);
+    if (mounted) setState(() => durationError = null);
   }
 
   Future<void> _saveZones() async {
     try {
       await widget.services.setStatisticsTimezone(statsZone.text.trim());
       await widget.services.setClockTimezone(clockZone.text.trim());
-      setState(() => error = null);
+      if (mounted) setState(() => zoneError = null);
     } catch (_) {
-      setState(() => error = '时区名称无效');
+      if (mounted) setState(() => zoneError = '时区名称无效');
     }
   }
 
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
     animation: widget.services,
-    builder: (context, _) => Scaffold(
-      appBar: AppBar(title: const Text('设置')),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
+    builder: (context, _) {
+      final content = ListView(
+        padding: const EdgeInsets.all(28),
         children: [
-          SwitchListTile(
-            title: const Text('深色模式'),
-            value: widget.services.darkMode,
-            onChanged: widget.services.setDarkMode,
-          ),
+          Text('外观', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 12),
+          for (final theme in AppTheme.values)
+            ListTile(
+              title: Text(switch (theme) {
+                AppTheme.light => '白底黑字',
+                AppTheme.dark => '黑底白字',
+                AppTheme.gray => '深灰底白字',
+              }),
+              leading: Icon(
+                theme == AppTheme.light
+                    ? Icons.light_mode_outlined
+                    : theme == AppTheme.dark
+                    ? Icons.dark_mode_outlined
+                    : Icons.contrast,
+              ),
+              trailing: widget.services.theme == theme
+                  ? const Icon(Icons.check)
+                  : null,
+              selected: widget.services.theme == theme,
+              onTap: () => widget.services.setTheme(theme),
+            ),
           ListTile(
             title: const Text('数字字体'),
             subtitle: Text(['轻细', '等宽', '衬线'][widget.services.fontStyle]),
@@ -114,6 +137,7 @@ class _PreferencesPageState extends State<PreferencesPage> {
           ),
           const SizedBox(height: 8),
           FilledButton(onPressed: _saveDurations, child: const Text('保存时长')),
+          if (durationError != null) Text(durationError!),
           const SizedBox(height: 20),
           TextField(
             controller: statsZone,
@@ -124,9 +148,15 @@ class _PreferencesPageState extends State<PreferencesPage> {
             decoration: const InputDecoration(labelText: '时钟默认时区'),
           ),
           TextButton(onPressed: _saveZones, child: const Text('保存时区')),
-          if (error != null) Text(error!),
+          if (zoneError != null) Text(zoneError!),
         ],
-      ),
-    ),
+      );
+      return widget.embedded
+          ? content
+          : Scaffold(
+              appBar: AppBar(title: const Text('设置')),
+              body: content,
+            );
+    },
   );
 }

@@ -25,7 +25,8 @@ class TaskRow extends StatelessWidget {
     title: Text(task.name),
     trailing: Text(
       formatDuration(duration),
-      style: Theme.of(context).textTheme.titleMedium,
+      style: Theme.of(context).textTheme.titleMedium
+          ?.copyWith(fontWeight: FontWeight.w400),
     ),
     onTap: onTap,
   );

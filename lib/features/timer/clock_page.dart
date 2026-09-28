@@ -5,6 +5,7 @@ import 'package:timezone/data/latest.dart' as timezone_data;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../../app.dart';
+import '../../ui/app_appearance.dart';
 
 class ClockPage extends StatefulWidget {
   const ClockPage({
@@ -123,29 +124,42 @@ class _ClockPageState extends State<ClockPage> {
                 ),
               ),
             Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      time,
-                      style: TextStyle(
-                        fontSize: 112,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                        fontWeight: FontWeight.w300,
-                        color: foreground,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 76, 24, 48),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          time,
+                          style: TextStyle(
+                            fontSize: (MediaQuery.sizeOf(context).width * 0.22)
+                                .clamp(140.0, 360.0),
+                            fontFamily: AppAppearance.digitFont(
+                              widget.services.fontStyle,
+                            ),
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                            fontWeight: FontWeight.w300,
+                            color: foreground,
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 24),
+                      Text(
+                        date,
+                        style: TextStyle(fontSize: 28, color: foreground),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        weekdays[local.weekday - 1],
+                        style: TextStyle(fontSize: 22, color: foreground),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 24),
-                  Text(date, style: TextStyle(fontSize: 22, color: foreground)),
-                  const SizedBox(height: 8),
-                  Text(
-                    weekdays[local.weekday - 1],
-                    style: TextStyle(fontSize: 18, color: foreground),
-                  ),
-                ],
+                ),
               ),
             ),
             Align(

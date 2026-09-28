@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 import 'dart:io';
 
 import 'package:desktop_multi_window/desktop_multi_window.dart';
@@ -13,6 +14,8 @@ import 'data/local/local_repository.dart';
 import 'domain/timer/timer_state.dart';
 import 'features/timer/clock_page.dart';
 import 'features/timer/timer_page.dart';
+import 'platform/timer_window.dart';
+import 'ui/app_appearance.dart';
 
 Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -61,18 +64,34 @@ Future<void> main(List<String> args) async {
   );
   await services.load();
   await services.restoreCloudLock();
-  _mainServices = services;
+  _bindMainServices(services);
   runApp(
     AppHost(
       database: database,
       initialServices: services,
       gateway: gateway,
-      onServicesChanged: (value) => _mainServices = value,
+      onServicesChanged: _bindMainServices,
     ),
   );
 }
 
 AppServices? _mainServices;
+VoidCallback? _appearanceListener;
+
+void _bindMainServices(AppServices services) {
+  final previous = _appearanceListener;
+  if (previous != null) _mainServices?.removeListener(previous);
+  _mainServices = services;
+  var theme = services.theme;
+  var fontStyle = services.fontStyle;
+  _appearanceListener = () {
+    if (theme == services.theme && fontStyle == services.fontStyle) return;
+    theme = services.theme;
+    fontStyle = services.fontStyle;
+    unawaited(TimerWindow(services).refreshAppearance());
+  };
+  services.addListener(_appearanceListener!);
+}
 
 Future<void> _startTimerWindow(
   WindowController controller,
@@ -94,7 +113,13 @@ Future<void> _startTimerWindow(
     } catch (_) {}
   });
   await controller.setWindowMethodHandler((call) async {
-    if (call.method == 'compact') {
+    if (call.method == 'appearance') {
+      final appearance = Map<String, dynamic>.from(call.arguments as Map);
+      services.applyAppearance(
+        theme: AppAppearance.parseTheme(appearance['theme'] as String?),
+        fontStyle: appearance['fontStyle'] as int,
+      );
+    } else if (call.method == 'compact') {
       final compact = call.arguments == true;
       await windowManager.setFullScreen(!compact);
       if (compact) {
@@ -117,22 +142,24 @@ Future<void> _startTimerWindow(
   }
 
   runApp(
-    MaterialApp(
-      theme: ThemeData.light(useMaterial3: true),
-      darkTheme: ThemeData.dark(useMaterial3: true),
-      themeMode: services.darkMode ? ThemeMode.dark : ThemeMode.light,
-      home: data['timerView'] == 'clock'
-          ? ClockPage(
-              services: services,
-              onClose: () => windowManager.close(),
-              onToggleCompact: toggleCompact,
-            )
-          : TimerPage(
-              services: services,
-              onClose: () => windowManager.close(),
-              onToggleCompact: toggleCompact,
-              onEnded: () => windowManager.close(),
-            ),
+    AnimatedBuilder(
+      animation: services,
+      builder: (context, _) => MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: AppAppearance.themeFor(services.theme),
+        home: data['timerView'] == 'clock'
+            ? ClockPage(
+                services: services,
+                onClose: () => windowManager.close(),
+                onToggleCompact: toggleCompact,
+              )
+            : TimerPage(
+                services: services,
+                onClose: () => windowManager.close(),
+                onToggleCompact: toggleCompact,
+                onEnded: () => windowManager.close(),
+              ),
+      ),
     ),
   );
 }

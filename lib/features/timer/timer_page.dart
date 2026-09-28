@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../app.dart';
+import '../../ui/app_appearance.dart';
 import '../../domain/timer/timer_state.dart';
 import 'timer_controls.dart';
 
@@ -120,46 +121,54 @@ class _TimerPageState extends State<TimerPage> {
                   ),
                 ),
               Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      label,
-                      style: TextStyle(
-                        letterSpacing: 4,
-                        fontSize: 14,
-                        color: foreground,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        _display(projected, displayNow),
-                        style: TextStyle(
-                          fontSize: 112,
-                          fontWeight: FontWeight.w300,
-                          fontFamily: switch (widget.services.fontStyle) {
-                            1 => 'monospace',
-                            2 => 'serif',
-                            _ => null,
-                          },
-                          fontFeatures: const [FontFeature.tabularFigures()],
-                          color: foreground,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 64, 24, 104),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          label,
+                          style: TextStyle(
+                            letterSpacing: 4,
+                            fontSize: 18,
+                            color: foreground,
+                          ),
                         ),
-                      ),
+                        const SizedBox(height: 20),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            _display(projected, displayNow),
+                            style: TextStyle(
+                              fontSize:
+                                  (MediaQuery.sizeOf(context).width * 0.22)
+                                      .clamp(140.0, 360.0),
+                              fontWeight: FontWeight.w300,
+                              fontFamily: AppAppearance.digitFont(
+                                widget.services.fontStyle,
+                              ),
+                              fontFeatures: const [
+                                FontFeature.tabularFigures(),
+                              ],
+                              color: foreground,
+                            ),
+                          ),
+                        ),
+                        if (projected.clockWarning)
+                          const Padding(
+                            padding: EdgeInsets.only(top: 20),
+                            child: Text('系统时间发生回拨，请校准时间后继续'),
+                          ),
+                        if (phase == TimerPhase.waiting)
+                          const Padding(
+                            padding: EdgeInsets.only(top: 24),
+                            child: Text('休息已结束，准备好后开始下一轮'),
+                          ),
+                      ],
                     ),
-                    if (projected.clockWarning)
-                      const Padding(
-                        padding: EdgeInsets.only(top: 20),
-                        child: Text('系统时间发生回拨，请校准时间后继续'),
-                      ),
-                    if (phase == TimerPhase.waiting)
-                      const Padding(
-                        padding: EdgeInsets.only(top: 24),
-                        child: Text('休息已结束，准备好后开始下一轮'),
-                      ),
-                  ],
+                  ),
                 ),
               ),
               Align(

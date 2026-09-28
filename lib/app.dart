@@ -10,6 +10,7 @@ import 'domain/records/task.dart';
 import 'domain/timer/timer_engine.dart';
 import 'domain/timer/timer_state.dart';
 import 'features/launcher/launcher_page.dart';
+import 'ui/app_appearance.dart';
 
 class AppServices extends ChangeNotifier {
   AppServices({
@@ -59,7 +60,8 @@ class AppServices extends ChangeNotifier {
   Duration breakDuration = const Duration(minutes: 5);
   String statisticsTimezone = 'Asia/Shanghai';
   String clockTimezone = 'Asia/Shanghai';
-  bool darkMode = false;
+  AppTheme theme = AppTheme.light;
+  bool get darkMode => theme != AppTheme.light;
   int fontStyle = 0;
 
   List<TaskRecord> get tasks =>
@@ -101,7 +103,7 @@ class AppServices extends ChangeNotifier {
     activeTimer = await store.loadTimer();
     _lastCheckpoint = activeTimer?.lastObservedAt;
     final settings = await store.getSettings();
-    darkMode = settings['theme'] == 'dark';
+    theme = AppAppearance.parseTheme(settings['theme']);
     fontStyle = int.tryParse(settings['fontStyle'] ?? '') ?? 0;
     statisticsTimezone = settings['statisticsTimezone'] ?? 'Asia/Shanghai';
     clockTimezone = settings['clockTimezone'] ?? 'Asia/Shanghai';
@@ -122,8 +124,12 @@ class AppServices extends ChangeNotifier {
   }
 
   Future<void> setDarkMode(bool value) async {
-    await _savePreference('theme', value ? 'dark' : 'light');
-    darkMode = value;
+    await setTheme(value ? AppTheme.dark : AppTheme.light);
+  }
+
+  Future<void> setTheme(AppTheme value) async {
+    await _savePreference('theme', value.name);
+    theme = value;
     notifyListeners();
   }
 
@@ -131,6 +137,16 @@ class AppServices extends ChangeNotifier {
     if (value < 0 || value > 2) throw ArgumentError('Unknown font style');
     await _savePreference('fontStyle', value.toString());
     fontStyle = value;
+    notifyListeners();
+  }
+
+  void applyAppearance({required AppTheme theme, required int fontStyle}) {
+    if (fontStyle < 0 || fontStyle > 2) {
+      throw ArgumentError('Unknown font style');
+    }
+    if (this.theme == theme && this.fontStyle == fontStyle) return;
+    this.theme = theme;
+    this.fontStyle = fontStyle;
     notifyListeners();
   }
 
@@ -499,26 +515,9 @@ class TimerApp extends StatelessWidget {
   Widget build(BuildContext context) => AnimatedBuilder(
     animation: services,
     builder: (context, _) => MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Timer',
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: const ColorScheme.light(
-          primary: Colors.black,
-          onPrimary: Colors.white,
-          surface: Colors.white,
-          onSurface: Colors.black,
-        ),
-      ),
-      darkTheme: ThemeData(
-        useMaterial3: true,
-        colorScheme: const ColorScheme.dark(
-          primary: Colors.white,
-          onPrimary: Colors.black,
-          surface: Colors.black,
-          onSurface: Colors.white,
-        ),
-      ),
-      themeMode: services.darkMode ? ThemeMode.dark : ThemeMode.light,
+      theme: AppAppearance.themeFor(services.theme),
       home: LauncherPage(
         services: services,
         onAccount: onAccount,

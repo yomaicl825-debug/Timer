@@ -49,6 +49,10 @@ class TimerWindow {
         if (data['timerView'] == args.name &&
             data['ownerId'] == services.ownerId) {
           _controller = existing;
+          await existing.invokeMethod<void>('appearance', {
+            'theme': services.theme.name,
+            'fontStyle': services.fontStyle,
+          });
           await existing.show();
           return;
         }
@@ -85,6 +89,30 @@ class TimerWindow {
       }
     }
     _controller = null;
+  }
+
+  Future<void> refreshAppearance() async {
+    if (!Platform.isWindows || !services.nativeWindows) return;
+    try {
+      final windows = await WindowController.getAll();
+      for (final window in windows) {
+        try {
+          final data = jsonDecode(window.arguments) as Map<String, dynamic>;
+          if (data['ownerId'] != services.ownerId ||
+              data['timerView'] == null) {
+            continue;
+          }
+          await window.invokeMethod<void>('appearance', {
+            'theme': services.theme.name,
+            'fontStyle': services.fontStyle,
+          });
+        } catch (_) {
+          // A window may close while an appearance update is being sent.
+        }
+      }
+    } catch (_) {
+      // Saved preferences will be applied when the next window opens.
+    }
   }
 
   Future<void> setCompact(bool compact) async {

@@ -78,7 +78,7 @@ class _CalendarViewState extends State<CalendarView> {
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 7,
-            mainAxisExtent: 38,
+            mainAxisExtent: 48,
           ),
           itemCount: 42,
           itemBuilder: (context, index) {

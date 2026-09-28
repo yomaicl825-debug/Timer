@@ -54,10 +54,11 @@ void main() {
       clock: () => now,
     );
     await tester.pumpWidget(MaterialApp(home: ProfilePage(services: services)));
+    await openProfileSection(tester, 'history');
     await tester.scrollUntilVisible(
       find.byKey(const Key('session-s')),
       150,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: find.byType(Scrollable).last,
     );
     await tester.tap(find.byKey(const Key('session-s')));
     await tester.pumpAndSettle();
@@ -68,10 +69,11 @@ void main() {
     await tester.tap(find.text('保存'));
     await tester.pumpAndSettle();
     expect(services.sessions.single.taskId, 'physics');
+    await openProfileSection(tester, 'history');
     await tester.scrollUntilVisible(
       find.byKey(const Key('session-s')),
       150,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: find.byType(Scrollable).last,
     );
     await tester.tap(find.byKey(const Key('session-s')));
     await tester.pumpAndSettle();
@@ -85,9 +87,9 @@ void main() {
   ) async {
     final services = AppServices.fake(clock: () => now);
     await tester.pumpWidget(MaterialApp(home: ProfilePage(services: services)));
-    await tester.tap(find.text('设置'));
+    await openProfileSection(tester, 'settings');
     await tester.pumpAndSettle();
-    await tester.tap(find.byType(SwitchListTile));
+    await tester.tap(find.text('黑底白字'));
     await tester.pump();
     expect(services.darkMode, isTrue);
     await tester.tap(find.text('数字字体'));
@@ -115,12 +117,13 @@ void main() {
       clock: () => now,
     );
     await tester.pumpWidget(MaterialApp(home: ProfilePage(services: services)));
+    await openProfileSection(tester, 'history');
     await tester.scrollUntilVisible(
       find.byKey(const Key('session-s')),
       150,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: find.byType(Scrollable).last,
     );
-    await tester.drag(find.byType(ListView), const Offset(0, -150));
+    await tester.drag(find.byType(ListView).last, const Offset(0, -150));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('session-s')));
     await tester.pumpAndSettle();
@@ -131,7 +134,8 @@ void main() {
       services.sessions.single.creditedDuration,
       const Duration(hours: 2, minutes: 30),
     );
-    await tester.drag(find.byType(ListView), const Offset(0, 800));
+    await openProfileSection(tester, 'calendar');
+    await tester.drag(find.byType(ListView).last, const Offset(0, 800));
     await tester.pumpAndSettle();
     expect(find.text('今日 02:30:00'), findsOneWidget);
   });
@@ -174,10 +178,11 @@ void main() {
       ),
     );
     expect(find.text('今日 00:00:00'), findsOneWidget);
+    await openProfileSection(tester, 'history');
     await tester.scrollUntilVisible(
       find.text('待处理的重叠记录'),
       150,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: find.byType(Scrollable).last,
     );
     await tester.pumpAndSettle();
     await tester.tap(find.text('保留 Math · 01:00:00'));
@@ -195,4 +200,14 @@ void main() {
     expect(find.text('2026-01-01 · 01:00:00'), findsOneWidget);
     await mouse.removePointer();
   });
+}
+
+Future<void> openProfileSection(WidgetTester tester, String name) async {
+  final target = find.byKey(Key('profile-nav-$name'));
+  if (target.evaluate().isEmpty) {
+    await tester.tap(find.byTooltip('打开导航'));
+    await tester.pumpAndSettle();
+  }
+  await tester.tap(target);
+  await tester.pumpAndSettle();
 }

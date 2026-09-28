@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:study_timer/app.dart';
 import 'package:study_timer/data/cloud/cloudbase_gateway.dart';
 import 'package:study_timer/features/auth/auth_page.dart';
-import 'package:study_timer/features/profile/profile_page.dart';
 
 void main() {
   testWidgets('create, study, pause, reassign and inspect calendar', (
@@ -50,13 +49,15 @@ void main() {
       const Duration(minutes: 45),
     );
 
-    await tester.pumpWidget(MaterialApp(home: ProfilePage(services: services)));
+    await tester.tap(find.text('个人主页'));
+    await tester.pumpAndSettle();
+    await openProfileSection(tester, 'history');
     await tester.scrollUntilVisible(
       find.byKey(Key('session-${services.sessions.single.id}')),
       150,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: find.byType(Scrollable).last,
     );
-    await tester.drag(find.byType(ListView), const Offset(0, -150));
+    await tester.drag(find.byType(ListView).last, const Offset(0, -150));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(Key('session-${services.sessions.single.id}')));
     await tester.pumpAndSettle();
@@ -71,6 +72,15 @@ void main() {
       services.statistics.daily['2026-01-01'],
       const Duration(minutes: 45),
     );
+    await openProfileSection(tester, 'settings');
+    await tester.tap(find.text('深灰底白字'));
+    await tester.pumpAndSettle();
+    expect(
+      Theme.of(tester.element(find.text('深灰底白字'))).scaffoldBackgroundColor,
+      const Color(0xff333333),
+    );
+    await openProfileSection(tester, 'calendar');
+    expect(find.text('今日 00:45:00'), findsOneWidget);
   });
 }
 
@@ -85,4 +95,14 @@ class _FakeTransport extends CloudTransport {
   Future<Map<String, dynamic>> command(Map<String, dynamic> data) async => {
     'status': 'success',
   };
+}
+
+Future<void> openProfileSection(WidgetTester tester, String name) async {
+  final target = find.byKey(Key('profile-nav-$name'));
+  if (target.evaluate().isEmpty) {
+    await tester.tap(find.byTooltip('打开导航'));
+    await tester.pumpAndSettle();
+  }
+  await tester.tap(target);
+  await tester.pumpAndSettle();
 }
