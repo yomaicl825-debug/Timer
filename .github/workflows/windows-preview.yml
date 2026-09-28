@@ -1,0 +1,68 @@
+name: Windows preview
+on:
+  workflow_run:
+    workflows: [Check]
+    types: [completed]
+permissions:
+  actions: read
+  contents: write
+concurrency:
+  group: windows-preview-0.1.0
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: windows-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      PREVIEW_TAG: windows-preview-0.1.0
+    steps:
+      - name: Check whether this preview is already published
+        id: release
+        shell: pwsh
+        run: |
+          $releases = gh release list --limit 100 --json tagName | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { throw 'Unable to check existing releases' }
+          $exists = @($releases | Where-Object tagName -eq $env:PREVIEW_TAG).Count -gt 0
+          "publish=$((!$exists).ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+      - uses: actions/checkout@v6
+        if: steps.release.outputs.publish == 'true'
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - uses: actions/download-artifact@v4
+        if: steps.release.outputs.publish == 'true'
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ github.event.workflow_run.id }}
+          name: timer-windows-build
+          path: build/windows/x64/runner/Release
+      - name: Install Inno Setup
+        if: steps.release.outputs.publish == 'true'
+        shell: pwsh
+        run: choco install innosetup --yes --no-progress
+      - name: Package verified Windows build
+        if: steps.release.outputs.publish == 'true'
+        shell: pwsh
+        run: ./scripts/package-windows.ps1 -Version '0.1.0-preview'
+      - name: Publish local-only preview
+        if: steps.release.outputs.publish == 'true'
+        shell: pwsh
+        env:
+          TESTED_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          @'
+          Windows 本机试用版：任务列表、学习正计时、番茄钟、历史归类和日历统计。
+
+          下载 windows-setup.exe 安装，或完整解压 windows-portable.zip 后运行 study_timer.exe。
+
+          本版仅在本机保存数据，邮箱登录和跨设备同步尚未启用。删除应用前请保留数据；当前没有导出恢复入口。安装包暂无商业代码签名，Windows 可能显示发布者未知。
+
+          Windows 构建及设备流程、Android 构建及设备流程、静态分析和自动测试均须通过，才会发布此包。Android 公开安装包及 iPhone 版本尚未发布。
+          '@ | Set-Content -LiteralPath preview-notes.md -Encoding UTF8
+          $assets = @(Get-ChildItem -LiteralPath dist -File | ForEach-Object FullName)
+          gh release create $env:PREVIEW_TAG @assets --target $env:TESTED_SHA --prerelease --title 'Timer 0.1.0 · Windows 本机试用版' --notes-file preview-notes.md
+          if ($LASTEXITCODE -ne 0) { throw 'Preview release failed' }
