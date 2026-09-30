@@ -1,0 +1,139 @@
+name: Timefold V0.4
+on:
+  workflow_run:
+    workflows: [Check]
+    types: [completed]
+permissions:
+  actions: read
+  contents: write
+concurrency:
+  group: timefold-v0.4
+  cancel-in-progress: false
+jobs:
+  windows:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - name: Require V0.4 source
+        shell: pwsh
+        run: |
+          if (!(Select-String -LiteralPath pubspec.yaml -Pattern '^version: 0\.4\.0\+4$') -or !(Test-Path docs/v0.4-release.md)) { throw 'Tested source is not V0.4' }
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ github.event.workflow_run.id }}
+          name: timer-windows-build
+          path: build/windows/x64/runner/Release
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup --yes --no-progress
+      - name: Package tested Windows build
+        shell: pwsh
+        run: ./scripts/package-windows.ps1 -Version '0.4.0-preview'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v04-windows
+          path: dist/*
+  android:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.5'
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Require cloud environment and signing secrets
+        env:
+          CLOUDBASE_ENV: ${{ vars.CLOUDBASE_ENV }}
+          KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          test -n "$CLOUDBASE_ENV" && test -n "$KEYSTORE" &&
+            test -n "$STORE_PASSWORD" && test -n "$KEY_PASSWORD" &&
+            test -n "$KEY_ALIAS" || { echo 'V0.4 release configuration is incomplete' >&2; exit 1; }
+      - name: Prepare Android signing files
+        env:
+          KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          printf '%s' "$KEYSTORE" | base64 -d > android/app/upload-keystore.jks
+          {
+            printf 'storePassword=%s\n' "$STORE_PASSWORD"
+            printf 'keyPassword=%s\n' "$KEY_PASSWORD"
+            printf 'keyAlias=%s\n' "$KEY_ALIAS"
+            printf 'storeFile=upload-keystore.jks\n'
+          } > android/key.properties
+      - name: Build signed Android APK
+        run: flutter build apk --release --dart-define=CLOUDBASE_ENV=${{ vars.CLOUDBASE_ENV }}
+      - name: Verify APK signature and owner certificate
+        run: |
+          APK=build/app/outputs/flutter-apk/app-release.apk
+          APK_SIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -n 1)
+          "$APK_SIGNER" verify --verbose "$APK"
+          ACTUAL=$("$APK_SIGNER" verify --print-certs "$APK" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p' | tr -d '\r' | tr '[:lower:]' '[:upper:]')
+          EXPECTED=79FA211EEE84B551B1959C02CA0EC42D2AB575D1CBE93FC10B0733FD070703F0
+          test "$ACTUAL" = "$EXPECTED" || { echo 'APK certificate does not match the V0.4 owner key' >&2; exit 1; }
+      - name: Collect Android APK
+        run: |
+          mkdir -p dist
+          cp build/app/outputs/flutter-apk/app-release.apk dist/Timefold-0.4.0-preview-android.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v04-android
+          path: dist/*
+  publish:
+    needs: [windows, android]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: v04-windows
+          path: dist
+      - uses: actions/download-artifact@v4
+        with:
+          name: v04-android
+          path: dist
+      - name: Verify release tag target
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VERSION_TAG: V0.4
+          EXPECTED_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: node scripts/assert-release-tag.cjs
+      - name: Prepare release assets
+        run: |
+          rm -f dist/SHA256SUMS.txt
+          cd dist
+          sha256sum Timefold-0.4.0-preview-* > SHA256SUMS.txt
+          cp ../docs/v0.4-release.md V0.4-release-notes.md
+      - name: Publish V0.4 prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release create V0.4 dist/* --target "${{ github.event.workflow_run.head_sha }}" --prerelease --title 'Timefold V0.4 · 云端与 Android 试用版' --notes-file docs/v0.4-release.md

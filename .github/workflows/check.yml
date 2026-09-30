@@ -32,7 +32,13 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
-      - run: flutter build windows --release
+      - name: Require CloudBase environment for V0.4
+        shell: pwsh
+        env:
+          CLOUDBASE_ENV: ${{ vars.CLOUDBASE_ENV }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:CLOUDBASE_ENV)) { throw 'CLOUDBASE_ENV is required for V0.4' }
+      - run: flutter build windows --release --dart-define=CLOUDBASE_ENV=${{ vars.CLOUDBASE_ENV }}
       - run: flutter test integration_test/study_flow_test.dart
       - uses: actions/upload-artifact@v4
         with:
@@ -52,6 +58,10 @@ jobs:
           distribution: temurin
           java-version: '17'
       - run: flutter pub get
+      - name: Require CloudBase environment for V0.4
+        env:
+          CLOUDBASE_ENV: ${{ vars.CLOUDBASE_ENV }}
+        run: test -n "$CLOUDBASE_ENV"
       - name: Create temporary CI signing key
         run: |
           keytool -genkeypair -noprompt -keystore android/app/upload-keystore.jks \
@@ -63,7 +73,7 @@ jobs:
             echo 'keyAlias=ci'
             echo 'storeFile=upload-keystore.jks'
           } > android/key.properties
-      - run: flutter build apk --release
+      - run: flutter build apk --release --dart-define=CLOUDBASE_ENV=${{ vars.CLOUDBASE_ENV }}
       - name: Verify release APK signature
         run: |
           APK_SIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -n 1)
